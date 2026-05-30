@@ -1,1 +1,107 @@
 @import "tailwindcss";
+
+/* Paleta básica para usar en todo el proyecto (primary, secondary, background, etc.) */
+:root {
+    /* Colores boton*/
+    --color-primary: #271408;
+    --color-primary-acent: #3B1F0B;
+    --color-secondary: #7c3aed;
+    --color-secondary-500: #7c3aed;
+
+    /* Colores texto*/
+    --color-text: #ffffff;
+    --color-muted: #94a3b8;
+    --color-accent: #FA7F02;
+    --color-text-success: #5DD346;
+    /* cyan */
+
+    --color-background: #12110F;
+    --color-secondary-background: #131311;
+    --color-bar-bg: #181714;
+    --color-border-bg-secondary: #1D1B19;
+    /* fondo oscuro */
+    --color-surface: #0b1220;
+    /* superficie */
+
+    --color-success: #1B2919;
+    --color-warning: #f59e0b;
+    --color-danger: #ef4444;
+    --color-info: #0284c7;
+
+    --color-border: #1f2937;
+}
+
+/* Clases utilitarias básicas que usan las variables para integrarse con Tailwind utilities */
+@layer utilities {
+    .bg-primary {
+        background-color: var(--color-background);
+    }
+
+    .bg-secondary {
+        background-color: var(--color-secondary-background);
+    }
+
+    .bg-success {
+        background-color: var(--color-success);
+    }
+
+    .bar-bg {
+        background-color: var(--color-bar-bg);
+    }
+
+    .text-primary {
+        color: var(--color-primary);
+    }
+
+    .text-secondary {
+        color: var(--color-secondary);
+    }
+
+    .text-accent {
+        color: var(--color-accent);
+    }
+
+    .text-muted {
+        color: var(--color-muted);
+    }
+
+    .text-app {
+        color: var(--color-text);
+    }
+
+    .text-success {
+        color: var(--color-text-success);
+    }
+
+    .text-danger {
+        color: var(--color-danger);
+    }
+
+    .border-primary {
+        border-color: var(--color-primary);
+    }
+
+    .border-bg-secondary {
+        border-color: var(--color-border-bg-secondary);
+    }
+
+    .border-muted {
+        border-color: var(--color-border);
+    }
+
+    .button-primary {
+        background-color: var(--color-primary);
+    }
+
+    .button-primary:hover {
+        background-color: var(--color-primary-acent);
+    }
+
+    .button-transparent {
+        background-color: transparent;
+    }
+
+    .button-transparent:hover {
+        background-color: var(--color-primary);
+    }
+}

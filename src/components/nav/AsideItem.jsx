@@ -16,7 +16,7 @@ function AsideItem({ to, label, icon, path }) {
                             damping: 35,
                         }}
                         className="
-                      absolute left-0 top-1/2 z-20 h-11 w-[5px]
+                      absolute left-0 top-1/2 z-20 h-11 w-1.25
                       -translate-y-1/2 rounded-r-full
                       bg-[#F87D01]
                       blur-[0.2px]
