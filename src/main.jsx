@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import ReactDOM from "react-dom/client";
 import {
   createBrowserRouter,
@@ -8,6 +9,7 @@ import "./index.css";
 import { Suspense, lazy, StrictMode } from "react";
 
 const LazyHome = lazy(() => import("./pages/Home"));
+const LazyProjects = lazy(() => import("./pages/Projects"));
 
 const router = createBrowserRouter([
   {
@@ -20,6 +22,12 @@ const router = createBrowserRouter([
           <LazyHome />
         </Suspense>,
       },
+      {
+        path: "proyectos",
+        element: <Suspense fallback="Loading...">
+          <LazyProjects />
+        </Suspense>,
+      }
     ],
   },
 ]);
