@@ -11,7 +11,7 @@ export default function AnimatedOutlet({ location, previousPath }) {
     const previousIndex = routeOrder[previousPath.current] ?? 0;
 
     const direction =
-        currentIndex >= previousIndex ? "forward" : "backward";
+        currentIndex >= previousIndex ? "backward" : "forward";
 
     const contextData = {
         location,

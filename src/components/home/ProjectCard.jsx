@@ -65,7 +65,7 @@ function ProjectCard() {
                                 <span className="text-sm text-muted">
                                     ruta
                                 </span>
-                                <MyButton
+                                <MyButton className="absolute right-4 bottom-0"
                                     bg="button-transparent"
                                     icon={<FolderIcon fill="transparent" stroke="#FA7F02" size={1.5} />} />
                             </div>
