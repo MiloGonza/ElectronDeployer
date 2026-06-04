@@ -11,16 +11,30 @@ import ProjectRapidActions from "../components/home/ProjectRapidActions";
 import { useEffect } from "react";
 
 
+
 function Home() {
     //const context = useOutletContext();
 
     const [output, setOutput] = useState('');
+    const [platform, setPlatform] = useState('');
+    const [rutaEnv, setRutaEnv] = useState('');
+    const [rutaProyecto, setRutaProyecto] = useState('');
 
     useEffect(() => {
         if (!window.electronAPI) return;
 
         window.electronAPI.onCommandOutput(data => {
             setOutput(prev => prev + data);
+        });
+
+        window.electronAPI.getPlatform().then(setPlatform);
+
+        // Cargar último proyecto persistido
+        window.electronAPI.getLastProject().then((state) => {
+            if (state?.rutaProyecto) {
+                setRutaProyecto(state.rutaProyecto);
+                setOutput(`> Proyecto cargado: ${state.rutaProyecto}\n`);
+            }
         });
 
         return () => {
@@ -30,13 +44,53 @@ function Home() {
         };
     }, []);
 
-    const handleRunCommand = async (command) => {
-        setOutput(`> ${command}\n`);
+    useEffect(() => {
+        console.log("platform", platform);
+    }, [platform])
+
+    const handleRunCommand = async (command, cwdTarget = 'project') => {
+        let cwd;
+        if (cwdTarget === 'env' && rutaEnv) {
+            cwd = rutaEnv;
+        } else if (rutaProyecto) {
+            cwd = rutaProyecto;
+        }
+
+        const cwdLabel = cwd || 'cwd por defecto';
+        setOutput(`> ${command}  (${cwdLabel})\n`);
         try {
-            await window.electronAPI.runCommand(command);
+            await window.electronAPI.runCommand({ command, cwd });
         } catch (error) {
             setOutput((prev) => prev + `Error: ${error.message}\n`);
         }
+    };
+
+    const handleSelectProjectFolder = async () => {
+        if (!window.electronAPI) return;
+        const folder = await window.electronAPI.selectFolder({ title: 'Seleccionar carpeta del proyecto' });
+        if (folder) {
+            setRutaProyecto(folder);
+            setOutput((prev) => prev + `> Carpeta del proyecto: ${folder}\n`);
+            await window.electronAPI.saveLastProject(folder);
+        }
+    };
+
+    const handleSelectEnvFolder = async () => {
+        if (!window.electronAPI) return;
+        const folder = await window.electronAPI.selectFolder({ title: 'Seleccionar carpeta del entorno virtual' });
+        if (folder) {
+            setRutaEnv(folder);
+            setOutput((prev) => prev + `> Carpeta del entorno: ${folder}\n`);
+        }
+    };
+
+    const handleClearProject = async () => {
+        setRutaProyecto('');
+        setRutaEnv('');
+        if (window.electronAPI?.clearLastProject) {
+            await window.electronAPI.clearLastProject();
+        }
+        setOutput((prev) => prev + `> Selección de proyecto limpiada\n`);
     };
 
 
@@ -54,6 +108,7 @@ function Home() {
                         bg="button-primary"
                         textColor="text-accent"
                         label="Abrir carpeta del proyecto"
+                        onClick={handleSelectProjectFolder}
                         icon={<FolderIcon
                             fill="transparent"
                             stroke="#FA7F02"
@@ -62,37 +117,46 @@ function Home() {
                     />
                 </div>
             </div>
-            <ProjectCard />
+            <ProjectCard
+                rutaEnv={rutaEnv}
+                rutaProyecto={rutaProyecto}
+                NombreProjecto={rutaProyecto ? rutaProyecto.split(/[\\/]/).pop() : ''}
+                onSelectEnv={handleSelectEnvFolder}
+                onClearProject={handleClearProject}
+            />
             <div className="flex flex-col gap-2">
                 <h2>
                     Acciones rapidas
                 </h2>
-                <div className="grid grid-cols-4 items-center h-40 relative gap-20">
+                <div className="grid grid-cols-4 items-center min-h-40 relative gap-20">
                     <ProjectRapidActions
                         icon={<CodeIcon />}
                         label="Activar entorno"
-                        script="env\Scripts\activate"
+                        script={platform === 'win32' ? ("bin\\activate.bat") : "source bin/activate"}
                         color1="#853202"
                         color2="#181613"
                         borde="#793207"
+                        cwdTarget="env"
                         onClick={handleRunCommand}
                     />
                     <ProjectRapidActions
                         icon={<PythonIcon />}
                         label="Ejecutar python"
-                        script="env\scripts\python.exe"
+                        script={`${platform === 'win32' ? "bin\\python.exe" : "bin/python"}`}
                         color1="#B42E1F"
                         color2="#4E1F1E"
                         borde="#AD2C2A"
+                        cwdTarget="env"
                         onClick={handleRunCommand}
                     />
                     <ProjectRapidActions
                         icon={<TerminalIcon />}
                         label="abrir terminal"
-                        script="cmd.exe"
+                        script={`${platform === 'win32' ? "start cmd.exe" : "konsole"}`}
                         color1="#642358"
                         color2="#281927"
                         borde="#632C5D"
+                        cwdTarget="project"
                         onClick={handleRunCommand}
                     />
                     <ProjectRapidActions
@@ -102,6 +166,7 @@ function Home() {
                         color1="#944B02"
                         color2="#2D1E0E"
                         borde="#C97101"
+                        cwdTarget="project"
                         onClick={handleRunCommand}
                     />
                 </div>

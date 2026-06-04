@@ -5,12 +5,13 @@ export default function ProjectRapidActions({
     color1,
     color2,
     borde,
-    onClick
+    onClick,
+    cwdTarget = 'project', // 'project' | 'env'
 }) {
     return (
         <button
-            onClick={() => onClick(script)}
-            className="hover:cursor-pointer hover:scale-110 duration-300 flex flex-col items-center justify-center p-4 h-full rounded-xl border"
+            onClick={() => onClick(script, cwdTarget)}
+            className="hover:cursor-pointer hover:scale-110 duration-300 flex flex-col relative items-center justify-center p-4 h-full rounded-xl border"
             style={{
                 background: `linear-gradient(to bottom right, ${color1}, ${color2})`,
                 borderColor: borde
@@ -18,11 +19,14 @@ export default function ProjectRapidActions({
         >
             <div>{icon}</div>
 
-            <div className="flex flex-col text-center gap-1">
+            <div className="flex flex-col text-center gap-1 max-w-full">
                 <span>{label}</span>
 
-                <span className="text-sm text-muted">
+                <span className="text-sm text-muted max-w-full overflow-hidden text-ellipsis whitespace-nowrap">
                     {script}
+                </span>
+                <span className="text-xs text-muted opacity-70">
+                    cwd: {cwdTarget}
                 </span>
             </div>
         </button>
