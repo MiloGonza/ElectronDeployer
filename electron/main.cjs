@@ -151,6 +151,49 @@ ipcMain.handle('run-command', (event, payload) => {
   });
 });
 
+ipcMain.handle('get-python-version', async (_event, envPath) => {
+  try {
+    if (!envPath) {
+      throw new Error('No se proporcionó la ruta del entorno');
+    }
+
+    const pythonPath =
+      process.platform === 'win32'
+        ? path.join(envPath, 'Scripts', 'python.exe')
+        : path.join(envPath, 'bin', 'python');
+
+    return await new Promise((resolve, reject) => {
+      const proc = spawn(pythonPath, ['--version']);
+
+      let output = '';
+
+      proc.stdout.on('data', (data) => {
+        output += data.toString();
+      });
+
+      proc.stderr.on('data', (data) => {
+        output += data.toString();
+      });
+
+      proc.on('close', (code) => {
+        if (code !== 0) {
+          reject(new Error(output));
+          return;
+        }
+
+        resolve(output.trim());
+      });
+
+      proc.on('error', (err) => {
+        reject(err);
+      });
+    });
+  } catch (err) {
+    console.error(err);
+    return null;
+  }
+});
+
 app.on('ready', createWindow);
 
 app.on('window-all-closed', () => {

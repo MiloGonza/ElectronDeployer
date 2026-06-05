@@ -9,6 +9,7 @@ import MyButton from "../components/general/MyButton";
 import ProjectCard from "../components/home/ProjectCard";
 import ProjectRapidActions from "../components/home/ProjectRapidActions";
 import { useEffect } from "react";
+import { useProjectStore } from "../../electron/zustant";
 
 
 
@@ -17,8 +18,14 @@ function Home() {
 
     const [output, setOutput] = useState('');
     const [platform, setPlatform] = useState('');
-    const [rutaEnv, setRutaEnv] = useState('');
-    const [rutaProyecto, setRutaProyecto] = useState('');
+    const {
+        rutaProyecto,
+        setRutaProyecto,
+        rutaEnv,
+        setRutaEnv,
+        setPythonVersion,
+        setEntornoActivo,
+    } = useProjectStore();
 
     useEffect(() => {
         if (!window.electronAPI) return;
@@ -42,7 +49,7 @@ function Home() {
                 window.electronAPI.removeCommandOutputListener();
             }
         };
-    }, []);
+    }, [setRutaProyecto]);
 
     useEffect(() => {
         console.log("platform", platform);
@@ -93,6 +100,17 @@ function Home() {
         setOutput((prev) => prev + `> Selección de proyecto limpiada\n`);
     };
 
+    const handlerGetPythonVersion = async () => {
+        if (!window.electronAPI) return;
+        try {
+            const version = await window.electronAPI.getPythonVersion(rutaEnv);
+            setPythonVersion(version);
+            setOutput((prev) => prev + `> Versión de Python: ${version}\n`);
+        } catch (error) {
+            setOutput((prev) => prev + `Error al obtener versión de Python: ${error.message}\n`);
+        }
+    }
+
 
     return (
         <article className="flex-col gap-10 flex h-full relative">
@@ -123,6 +141,7 @@ function Home() {
                 NombreProjecto={rutaProyecto ? rutaProyecto.split(/[\\/]/).pop() : ''}
                 onSelectEnv={handleSelectEnvFolder}
                 onClearProject={handleClearProject}
+                handlerGetPythonVersion={handlerGetPythonVersion}
             />
             <div className="flex flex-col gap-2">
                 <h2>
@@ -138,7 +157,9 @@ function Home() {
                         borde="#793207"
                         cwdTarget="env"
                         onClick={handleRunCommand}
+                        onChange={() => setEntornoActivo(true)}
                     />
+                    {/* handleRunCommand, setEntornoActivo(true) */}
                     <ProjectRapidActions
                         icon={<PythonIcon />}
                         label="Ejecutar python"

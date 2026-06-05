@@ -7,10 +7,14 @@ export default function ProjectRapidActions({
     borde,
     onClick,
     cwdTarget = 'project', // 'project' | 'env'
+    onChange
 }) {
     return (
         <button
-            onClick={() => onClick(script, cwdTarget)}
+            onClick={() => {
+                onClick(script, cwdTarget);
+                onChange && onChange();
+            }}
             className="hover:cursor-pointer hover:scale-110 duration-300 flex flex-col relative items-center justify-center p-4 h-full rounded-xl border"
             style={{
                 background: `linear-gradient(to bottom right, ${color1}, ${color2})`,

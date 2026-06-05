@@ -16,4 +16,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
     removeCommandOutputListener: () => {
         ipcRenderer.removeAllListeners('command-output');
     },
+    getPythonVersion: (envPath) =>
+        ipcRenderer.invoke('get-python-version', envPath),
 });

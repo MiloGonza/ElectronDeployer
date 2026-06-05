@@ -1,12 +1,19 @@
+import { useEffect } from "react";
 import CheckIcon from "../../assets/icons/CheckIcon";
 import FolderIcon from "../../assets/icons/FolderIcon";
 import MyButton from "../general/MyButton";
 import { AnimatePresence, motion } from "motion/react";
 
-function ProjectCard({ rutaEnv, rutaProyecto, NombreProjecto, onSelectEnv, onClearProject }) {
+function ProjectCard({ rutaEnv, rutaProyecto, NombreProjecto, onSelectEnv, onClearProject, handlerGetPythonVersion }) {
 
     const hasProject = Boolean(rutaProyecto);
     const hasEnv = Boolean(rutaEnv);
+
+    useEffect(() => {
+        if (hasEnv) {
+            handlerGetPythonVersion();
+        }
+    }, [hasEnv]);
 
     return (
         <div className="bg-secondary p-4 rounded-xl border border-bg-secondary relative">
@@ -77,7 +84,7 @@ function ProjectCard({ rutaEnv, rutaProyecto, NombreProjecto, onSelectEnv, onCle
                                     {rutaEnv || "No se seleccionó un entorno"}
                                 </span>
                                 <MyButton
-                                    onClick={onSelectEnv}
+                                    onClick={() => onSelectEnv()}
                                     className="sticky right-4 bottom-0"
                                     bg="button-transparent"
                                     icon={<FolderIcon fill="transparent" stroke="#FA7F02" size={1.5} />}
