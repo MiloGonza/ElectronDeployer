@@ -25,16 +25,22 @@ function Home() {
         setRutaEnv,
         setPythonVersion,
         setEntornoActivo,
+        runserverActive,
+        setRunserverActive,
     } = useProjectStore();
 
     useEffect(() => {
-        if (!window.electronAPI) return;
-
-        window.electronAPI.onCommandOutput(data => {
-            setOutput(prev => prev + data);
-        });
-
         window.electronAPI.getPlatform().then(setPlatform);
+
+        if (
+            !window.electronAPI ||
+            !rutaProyecto
+        ) return;
+
+        window.electronAPI.startTerminal(
+            rutaProyecto
+        );
+
 
         // Cargar último proyecto persistido
         window.electronAPI.getLastProject().then((state) => {
@@ -45,30 +51,61 @@ function Home() {
         });
 
         return () => {
-            if (window.electronAPI?.removeCommandOutputListener) {
-                window.electronAPI.removeCommandOutputListener();
+
+            if (
+                window.electronAPI
+                    ?.stopTerminal
+            ) {
+
+                window.electronAPI
+                    .stopTerminal();
             }
+
         };
-    }, [setRutaProyecto]);
+    }, [setRutaEnv, setRutaProyecto, rutaProyecto]);
 
     useEffect(() => {
-        console.log("platform", platform);
-    }, [platform])
+        if (!window.electronAPI) return;
 
-    const handleRunCommand = async (command, cwdTarget = 'project') => {
-        let cwd;
-        if (cwdTarget === 'env' && rutaEnv) {
+        const listener = (data) => {
+            setOutput(prev => prev + data);
+        };
+
+        window.electronAPI.onCommandOutput(listener);
+
+        return () => {
+            window.electronAPI.removeCommandOutputListener();
+        };
+    }, []);
+
+    const handleRunCommand = async (
+        command,
+        cwdTarget = 'project'
+    ) => {
+        let cwd = '';
+
+        if (
+            cwdTarget === 'env' &&
+            rutaEnv
+        ) {
             cwd = rutaEnv;
         } else if (rutaProyecto) {
             cwd = rutaProyecto;
         }
 
-        const cwdLabel = cwd || 'cwd por defecto';
-        setOutput(`> ${command}  (${cwdLabel})\n`);
         try {
-            await window.electronAPI.runCommand({ command, cwd });
+            const result = await window.electronAPI.runCommand({
+                command,
+                cwd
+            });
+            return Boolean(result?.ok);
         } catch (error) {
-            setOutput((prev) => prev + `Error: ${error.message}\n`);
+            setOutput(
+                prev =>
+                    prev +
+                    `Error: ${error.message}\n`
+            );
+            return false;
         }
     };
 
@@ -189,14 +226,22 @@ function Home() {
                         borde="#C97101"
                         cwdTarget="project"
                         onClick={handleRunCommand}
+                        onChange={() => setRunserverActive(true)}
                     />
                 </div>
             </div>
-            <div className="flex bg-secondary p-4 rounded-xl flex-1 border border-bg-secondary flex-col gap-4">
-                <h3>
-                    Salida de comandos
-                </h3>
-                <div className="bg-primary flex-1 rounded-lg p-4 overflow-auto whitespace-pre-wrap font-mono text-sm text-gray-300">
+            <div className="flex bg-secondary p-4 rounded-xl flex-1 border border-bg-secondary flex-col gap-4 relative overflow-hidden">
+                <div className="flex items-center justify-between">
+                    <h3>
+                        Salida de comandos
+                    </h3>
+                    {
+                        runserverActive && (
+                            "El pp"
+                        )
+                    }
+                </div>
+                <div className="bg-primary flex flex-1 max-h-full max-x-full rounded-lg p-4 overflow-y-auto overflow-x-hidden whitespace-pre-wrap font-mono text-sm text-gray-300">
                     {output || '> Esperando comandos...'}
                 </div>
             </div>

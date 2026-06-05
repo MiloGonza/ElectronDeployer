@@ -3,7 +3,9 @@ import { create } from "zustand";
 export const useProjectStore = create((set) => ({
     //Proyecto
     rutaProyecto: null,
+    runserverActive: false,
     setRutaProyecto: (ruta) => set({ rutaProyecto: ruta }),
+    setRunserverActive: (active) => set({ runserverActive: active }),
     // NombreProjecto: null,
     // setNombreProjecto: (nombre) => set({ NombreProjecto: nombre }),
 

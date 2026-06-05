@@ -18,4 +18,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
     },
     getPythonVersion: (envPath) =>
         ipcRenderer.invoke('get-python-version', envPath),
+    startTerminal: (cwd) =>
+        ipcRenderer.invoke('start-terminal', cwd),
+
+    stopTerminal: () =>
+        ipcRenderer.invoke('stop-terminal'),
 });

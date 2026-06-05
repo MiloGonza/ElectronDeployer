@@ -9,12 +9,22 @@ export default function ProjectRapidActions({
     cwdTarget = 'project', // 'project' | 'env'
     onChange
 }) {
+
+    async function handleClick() {
+        try {
+            const result = onClick(script, cwdTarget);
+            const ok = result instanceof Promise ? await result : true;
+            if (ok) {
+                onChange && onChange();
+            }
+        } catch {
+            console.warn("onClick lanzó un error, no se ejecuta onChange");
+        }
+    }
+
     return (
         <button
-            onClick={() => {
-                onClick(script, cwdTarget);
-                onChange && onChange();
-            }}
+            onClick={() => handleClick()}
             className="hover:cursor-pointer hover:scale-110 duration-300 flex flex-col relative items-center justify-center p-4 h-full rounded-xl border"
             style={{
                 background: `linear-gradient(to bottom right, ${color1}, ${color2})`,
