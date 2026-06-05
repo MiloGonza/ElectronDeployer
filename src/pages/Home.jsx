@@ -16,7 +16,6 @@ import { useProjectStore } from "../../electron/zustant";
 function Home() {
     //const context = useOutletContext();
 
-    const [output, setOutput] = useState('');
     const [platform, setPlatform] = useState('');
     const {
         rutaProyecto,
@@ -27,48 +26,16 @@ function Home() {
         setEntornoActivo,
         runserverActive,
         setRunserverActive,
+        output,
+        setOutput,
+        appendOutput,
     } = useProjectStore();
-
-    useEffect(() => {
-        window.electronAPI.getPlatform().then(setPlatform);
-
-        if (
-            !window.electronAPI ||
-            !rutaProyecto
-        ) return;
-
-        window.electronAPI.startTerminal(
-            rutaProyecto
-        );
-
-
-        // Cargar último proyecto persistido
-        window.electronAPI.getLastProject().then((state) => {
-            if (state?.rutaProyecto) {
-                setRutaProyecto(state.rutaProyecto);
-                setOutput(`> Proyecto cargado: ${state.rutaProyecto}\n`);
-            }
-        });
-
-        return () => {
-
-            if (
-                window.electronAPI
-                    ?.stopTerminal
-            ) {
-
-                window.electronAPI
-                    .stopTerminal();
-            }
-
-        };
-    }, [setRutaEnv, setRutaProyecto, rutaProyecto]);
 
     useEffect(() => {
         if (!window.electronAPI) return;
 
         const listener = (data) => {
-            setOutput(prev => prev + data);
+            appendOutput(data);
         };
 
         window.electronAPI.onCommandOutput(listener);
@@ -115,7 +82,6 @@ function Home() {
         if (folder) {
             setRutaProyecto(folder);
             setOutput((prev) => prev + `> Carpeta del proyecto: ${folder}\n`);
-            await window.electronAPI.saveLastProject(folder);
         }
     };
 
@@ -131,9 +97,6 @@ function Home() {
     const handleClearProject = async () => {
         setRutaProyecto('');
         setRutaEnv('');
-        if (window.electronAPI?.clearLastProject) {
-            await window.electronAPI.clearLastProject();
-        }
         setOutput((prev) => prev + `> Selección de proyecto limpiada\n`);
     };
 
@@ -150,7 +113,7 @@ function Home() {
 
 
     return (
-        <article className="flex-col gap-10 flex h-full relative">
+        <article className="flex-col gap-6 flex h-full relative">
             <div className="flex  gap-5 justify-between">
                 <div className="flex-col gap-3 flex">
                     <h1 className="text-3xl font-bold">Bienvenido!</h1>
