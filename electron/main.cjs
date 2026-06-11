@@ -65,6 +65,11 @@ const startPersistentTerminal = (cwd) => {
 		{
 			cwd,
 			env: process.env,
+			// detached: en POSIX hace que bash sea líder de su propio grupo
+			// de procesos (pgid = pid). Eso nos permite mandar una señal a
+			// TODO el grupo (process.kill(-pid, ...)) y así interrumpir el
+			// proceso en foreground (runserver) igual que un Ctrl+C real.
+			detached: process.platform !== "win32",
 		}
 	);
 
@@ -319,11 +324,64 @@ ipcMain.handle(
 
 ipcMain.handle('stop-terminal', () => {
 	if (terminalProcess) {
-		terminalProcess.kill();
+		try {
+			if (process.platform === 'win32') {
+				terminalProcess.kill();
+			} else {
+				// Matamos todo el grupo (shell + cualquier hijo en foreground,
+				// p.ej. runserver) para no dejar procesos huérfanos.
+				process.kill(-terminalProcess.pid, 'SIGKILL');
+			}
+		} catch {
+			// El proceso ya pudo haber muerto; ignoramos.
+		}
 		terminalProcess = null;
 	}
 
 	return true;
+});
+
+ipcMain.handle('terminal-input', (_event, data) => {
+	if (!terminalProcess) {
+		return { ok: false, error: "Terminal no iniciada" };
+	}
+	if (typeof data !== 'string' || data.length === 0) {
+		return { ok: false, error: "Input vacío" };
+	}
+	// El usuario escribió el comando en el input controlado; el shell espera
+	// un newline para procesarlo. Si ya viene con \n, no lo duplicamos.
+	const payload = data.endsWith('\n') ? data : data + '\n';
+	try {
+		terminalProcess.stdin.write(payload);
+		return { ok: true };
+	} catch (err) {
+		return { ok: false, error: err.message };
+	}
+});
+
+ipcMain.handle('terminal-signal', (_event, signal) => {
+	if (!terminalProcess) {
+		return { ok: false, error: "Terminal no iniciada" };
+	}
+	try {
+		if (process.platform === 'win32') {
+			// En Windows, sin un PTY real no podemos mandar un Ctrl+C al
+			// grupo de procesos; como fallback escribimos el byte ^C en
+			// stdin (comportamiento previo).
+			const payload = typeof signal === 'string' && signal.length > 0 ? signal : '\x03';
+			terminalProcess.stdin.write(payload);
+			return { ok: true };
+		}
+		// POSIX: escribir '\x03' en stdin NO genera SIGINT (no hay tty que
+		// traduzca el byte en señal). Mandamos SIGINT directamente al grupo
+		// de procesos del shell (pid negativo = grupo, gracias a detached),
+		// para que el proceso en foreground (runserver, etc.) lo reciba.
+		// bash interactivo ignora SIGINT y sigue vivo.
+		process.kill(-terminalProcess.pid, 'SIGINT');
+		return { ok: true };
+	} catch (err) {
+		return { ok: false, error: err.message };
+	}
 });
 
 ipcMain.handle('get-python-version', async (_event, envPath) => {

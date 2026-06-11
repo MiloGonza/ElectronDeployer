@@ -23,4 +23,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
     stopTerminal: () =>
         ipcRenderer.invoke('stop-terminal'),
+
+    sendTerminalInput: (data) =>
+        ipcRenderer.invoke('terminal-input', data),
+
+    sendTerminalSignal: (signal) =>
+        ipcRenderer.invoke('terminal-signal', signal),
 });

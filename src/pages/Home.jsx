@@ -8,6 +8,7 @@ import TerminalIcon from "../assets/icons/TerminalIcon";
 import MyButton from "../components/general/MyButton";
 import ProjectCard from "../components/home/ProjectCard";
 import ProjectRapidActions from "../components/home/ProjectRapidActions";
+import Terminal from "../components/home/Terminal";
 import { useEffect } from "react";
 import { useProjectStore } from "../../electron/zustant";
 
@@ -23,12 +24,17 @@ function Home() {
         rutaEnv,
         setRutaEnv,
         setPythonVersion,
+        entornoActivo,
         setEntornoActivo,
         runserverActive,
         setRunserverActive,
         output,
         setOutput,
         appendOutput,
+        terminalActive,
+        setTerminalActive,
+        terminalInput,
+        setTerminalInput,
     } = useProjectStore();
 
     useEffect(() => {
@@ -111,6 +117,73 @@ function Home() {
         }
     }
 
+    // Activa el modo input de la terminal embebida. Garantiza que el
+    // shell persistente esté vivo (lo crea en cwd=rutaProyecto si todavía
+    // no existe; si ya existe, start-terminal es un no-op idempotente).
+    const handleOpenTerminal = async () => {
+        if (!window.electronAPI) return;
+
+        if (!rutaProyecto) {
+            setOutput((prev) => prev + `> Necesitás seleccionar una carpeta de proyecto primero\n`);
+            return;
+        }
+
+        try {
+            await window.electronAPI.startTerminal(rutaProyecto);
+            setTerminalActive(true);
+            setOutput((prev) => prev + `> Terminal interactiva activa (cwd: ${rutaProyecto})\n`);
+        } catch (error) {
+            setOutput((prev) => prev + `Error al abrir terminal: ${error.message}\n`);
+        }
+    };
+
+    // Enter en el input: manda el comando al stdin del shell persistente
+    // y deja una línea '$ <cmd>' en el output como rastro.
+    const handleTerminalSubmit = async (text) => {
+        if (!window.electronAPI) return;
+        setOutput((prev) => prev + `$ ${text}\n`);
+        try {
+            await window.electronAPI.sendTerminalInput(text);
+        } catch (error) {
+            setOutput((prev) => prev + `Error al enviar comando: ${error.message}\n`);
+        }
+    };
+
+    // Ctrl+C en el input: manda ^C al shell (corta lo que esté en
+    // foreground, p.ej. runserver). Anota la interrupción en el log.
+    const handleTerminalInterrupt = async () => {
+        if (!window.electronAPI) return;
+        setOutput((prev) => prev + `^C\n`);
+        try {
+            await window.electronAPI.sendTerminalSignal('\x03');
+        } catch (error) {
+            setOutput((prev) => prev + `Error al enviar ^C: ${error.message}\n`);
+        }
+    };
+
+    // Apaga el flag 'entorno activo' y manda 'deactivate' al shell
+    // (si fue activado por el botón de 'Activar entorno'). En cmd.exe el
+    // activate.bat no siempre expone un deactivate.bat; si no existe el
+    // script, el sendTerminalInput falla silenciosamente (el flag igual
+    // se apaga, que es lo que el usuario ve).
+    const handleDeactivateEnv = async () => {
+        setEntornoActivo(false);
+        setOutput((prev) => prev + `> Desactivando entorno…\n`);
+        try {
+            await window.electronAPI.sendTerminalInput('deactivate');
+        } catch (error) {
+            setOutput((prev) => prev + `deactivate no disponible: ${error.message}\n`);
+        }
+    };
+
+    // Detener runserver: manda ^C al shell (mismo flujo que el botón
+    // Ctrl+C) y apaga el flag visual. La señal interrumpe el proceso
+    // que esté en foreground, que es justamente el runserver.
+    const handleStopRunserver = async () => {
+        setRunserverActive(false);
+        await handleTerminalInterrupt();
+    };
+
 
     return (
         <article className="flex-col gap-6 flex h-full relative">
@@ -157,7 +230,10 @@ function Home() {
                         borde="#793207"
                         cwdTarget="env"
                         onClick={handleRunCommand}
-                        onChange={() => setEntornoActivo(true)}
+                        onChange={() => {
+                            setEntornoActivo(true);
+                            setTerminalActive(false);
+                        }}
                     />
                     {/* handleRunCommand, setEntornoActivo(true) */}
                     <ProjectRapidActions
@@ -169,16 +245,15 @@ function Home() {
                         borde="#AD2C2A"
                         cwdTarget="env"
                         onClick={handleRunCommand}
+                        onChange={() => setTerminalActive(false)}
                     />
                     <ProjectRapidActions
                         icon={<TerminalIcon />}
-                        label="abrir terminal"
-                        script={`${platform === 'win32' ? "start cmd.exe" : "konsole"}`}
+                        label="Escribir en terminal"
                         color1="#642358"
                         color2="#281927"
                         borde="#632C5D"
-                        cwdTarget="project"
-                        onClick={handleRunCommand}
+                        onClickCustom={handleOpenTerminal}
                     />
                     <ProjectRapidActions
                         icon={<PlayIcon />}
@@ -189,24 +264,60 @@ function Home() {
                         borde="#C97101"
                         cwdTarget="project"
                         onClick={handleRunCommand}
-                        onChange={() => setRunserverActive(true)}
+                        onChange={() => {
+                            setRunserverActive(true);
+                            setTerminalActive(false);
+                        }}
                     />
                 </div>
             </div>
-            <div className="flex bg-secondary p-4 rounded-xl flex-1 border border-bg-secondary flex-col gap-4 relative overflow-hidden">
-                <div className="flex items-center justify-between">
-                    <h3>
-                        Salida de comandos
-                    </h3>
-                    {
-                        runserverActive && (
-                            "El pp"
-                        )
+            <div className="flex flex-col gap-2 flex-1 min-h-0">
+                <h3>Salida de comandos</h3>
+                <Terminal
+                    output={output}
+                    title={`bash — ${rutaProyecto ? rutaProyecto.split(/[\\/]/).pop() : 'sin proyecto'}`}
+                    onClear={() => setOutput('')}
+                    status={runserverActive ? 'running' : 'idle'}
+                    active={terminalActive}
+                    inputValue={terminalInput}
+                    onInputChange={setTerminalInput}
+                    onSubmit={handleTerminalSubmit}
+                    onInterrupt={handleTerminalInterrupt}
+                    actions={
+                        <>
+                            {entornoActivo && (
+                                <MyButton
+                                    bg="button-primary"
+                                    textColor="text-accent"
+                                    className="text-xs"
+                                    padding="px-2 py-1"
+                                    label="Desactivar entorno"
+                                    onClick={handleDeactivateEnv}
+                                />
+                            )}
+                            {runserverActive && (
+                                <MyButton
+                                    bg="button-primary"
+                                    textColor="text-accent"
+                                    className="text-xs"
+                                    padding="px-2 py-1"
+                                    label="Detener runserver"
+                                    onClick={handleStopRunserver}
+                                />
+                            )}
+                            {terminalActive && (
+                                <MyButton
+                                    bg="button-primary"
+                                    textColor="text-accent"
+                                    className="text-xs"
+                                    padding="px-2 py-1"
+                                    label="Ctrl + C"
+                                    onClick={handleTerminalInterrupt}
+                                />
+                            )}
+                        </>
                     }
-                </div>
-                <div className="bg-primary flex flex-1 max-h-full max-x-full rounded-lg p-4 overflow-y-auto overflow-x-hidden whitespace-pre-wrap font-mono text-sm text-gray-300">
-                    {output || '> Esperando comandos...'}
-                </div>
+                />
             </div>
 
         </article>

@@ -7,10 +7,19 @@ export default function ProjectRapidActions({
     borde,
     onClick,
     cwdTarget = 'project', // 'project' | 'env'
-    onChange
+    onChange,
+    onClickCustom,
 }) {
 
     async function handleClick() {
+        // Si el padre define un handler custom, gana sobre el flujo de
+        // comando normal. Sirve para botones que no ejecutan nada en el
+        // shell (p.ej. 'abrir terminal', que solo cambia el modo del UI).
+        if (onClickCustom) {
+            onClickCustom();
+            return;
+        }
+
         try {
             const result = onClick(script, cwdTarget);
             const ok = result instanceof Promise ? await result : true;

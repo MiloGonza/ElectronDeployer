@@ -20,10 +20,33 @@ export const useProjectStore = create(
 
             // Consola (en memoria: se mantiene entre pestañas, no en disco)
             output: '',
-            setOutput: (output) => set({ output }),
+            setOutput: (output) =>
+                set((state) => ({
+                    output:
+                        typeof output === 'function'
+                            ? output(state.output ?? '')
+                            : output,
+                })),
             appendOutput: (chunk) =>
                 set((state) => ({ output: (state.output || '') + chunk })),
             clearOutput: () => set({ output: '' }),
+
+            // Modo interactivo de la terminal embebida: cuando está activo,
+            // el input al pie es visible y se puede escribir. Se desactiva
+            // cuando se lanza un comando automático (runserver, etc.) que
+            // usa el canal de sentinels en lugar de stdin directo.
+            terminalActive: false,
+            setTerminalActive: (active) => set({ terminalActive: !!active }),
+
+            // Buffer del input controlado de la terminal.
+            terminalInput: '',
+            setTerminalInput: (value) =>
+                set((state) => ({
+                    terminalInput:
+                        typeof value === 'function'
+                            ? value(state.terminalInput ?? '')
+                            : value,
+                })),
         }),
         {
             name: 'project-store',
