@@ -217,7 +217,7 @@ function Home() {
                 handlerGetPythonVersion={handlerGetPythonVersion}
             />
             <div className="flex flex-col gap-2">
-                <h2>
+                <h2 className="text-xl">
                     Acciones rapidas
                 </h2>
                 <div className="grid grid-cols-4 items-center min-h-40 relative gap-20">
@@ -272,7 +272,7 @@ function Home() {
                 </div>
             </div>
             <div className="flex flex-col gap-2 flex-1 min-h-0">
-                <h3>Salida de comandos</h3>
+                <h3 className="text-xl">Salida de comandos</h3>
                 <Terminal
                     output={output}
                     title={`bash — ${rutaProyecto ? rutaProyecto.split(/[\\/]/).pop() : 'sin proyecto'}`}
