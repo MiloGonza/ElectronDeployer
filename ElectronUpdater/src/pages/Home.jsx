@@ -11,7 +11,7 @@ import ProjectRapidActions from "../components/home/ProjectRapidActions";
 import Terminal from "../components/home/Terminal";
 import { useEffect } from "react";
 import { useProjectStore } from "../../electron/zustant";
-
+import PowerIcon from "../assets/icons/PowerIcon"
 
 
 function Home() {
@@ -301,7 +301,8 @@ function Home() {
                                     textColor="text-accent"
                                     className="text-xs"
                                     padding="px-2 py-1"
-                                    label="Detener runserver"
+                                    // label="Detener runserver"
+                                    icon={<PowerIcon size={1.3} stroke="#FA7F02" fill={"#FA7F02"} />}
                                     onClick={handleStopRunserver}
                                 />
                             )}

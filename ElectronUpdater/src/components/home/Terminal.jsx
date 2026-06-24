@@ -53,8 +53,8 @@ function Terminal({
         status === "error"
             ? "bg-danger"
             : status === "running"
-            ? "bg-success animate-pulse"
-            : "bg-muted";
+                ? "button-success animate-pulse"
+                : "bg-muted";
 
     const handleKeyDown = (e) => {
         if (e.key === "Enter") {
@@ -74,8 +74,8 @@ function Terminal({
             {/* Cabecera tipo ventana macOS */}
             <header className="flex items-center gap-3 px-4 py-2.5 bg-secondary border-b border-bg-secondary select-none">
                 <div className="flex items-center gap-2">
-                    <span className="w-3 h-3 rounded-full bg-danger" title="cerrar" />
-                    <span className="w-3 h-3 rounded-full bg-warning" title="minimizar" />
+                    {/* <span className="w-3 h-3 rounded-full bg-danger" title="cerrar" />
+                    <span className="w-3 h-3 rounded-full bg-warning" title="minimizar" /> */}
                     <span
                         className={`w-3 h-3 rounded-full ${statusDot}`}
                         title={status === "running" ? "ejecutando" : "inactivo"}
@@ -151,12 +151,12 @@ function LogLine({ line, isLast }) {
     const colorClass = isPrompt
         ? "text-accent"
         : line.level === "error"
-        ? "text-danger"
-        : line.level === "warning"
-        ? "text-warning"
-        : line.level === "success"
-        ? "text-success"
-        : "text-gray-300";
+            ? "text-danger"
+            : line.level === "warning"
+                ? "text-warning"
+                : line.level === "success"
+                    ? "text-success"
+                    : "text-gray-300";
 
     return (
         <div className="flex items-start gap-2 whitespace-pre-wrap break-words">

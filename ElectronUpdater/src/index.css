@@ -7,6 +7,7 @@
     --color-primary-acent: #3B1F0B;
     --color-secondary: #7c3aed;
     --color-secondary-500: #7c3aed;
+    --color-button-success: #00ff00;
 
     /* Colores texto*/
     --color-text: #ffffff;
@@ -24,7 +25,7 @@
     /* superficie */
 
     --color-success: #1B2919;
-    --color-warning: #f59e0b;
+    --color-warning: #ffa200;
     --color-danger: #ef4444;
     --color-info: #0284c7;
 
@@ -131,5 +132,9 @@
 
     .button-transparent:hover {
         background-color: var(--color-primary);
+    }
+
+    .button-success{
+        background-color: var(--color-button-success);
     }
 }

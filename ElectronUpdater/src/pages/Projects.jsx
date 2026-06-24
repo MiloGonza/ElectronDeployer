@@ -1,15 +1,38 @@
 // import { useOutletContext } from "react-router-dom";
 // import MyButton from "../components/general/MyButton";
 
-import { useEffect, useState } from "react";
+import { use, useEffect, useState } from "react";
 import { GetProjects } from "../api/ProjectsApi";
 import { AnimatePresence, motion } from "motion/react";
+import PlusIcon from "../assets/icons/PlusIcon";
+import MyButton from "../components/general/MyButton";
 
 function Projects() {
 
     const [projectList, setProjectList] = useState([]);
     const [isHovered, setIsHovered] = useState(false);
+    const [importedFolder, setImportedFolder] = useState({})
+    
     // const context = useOutletContext();
+
+    const handleImportClick = async () => {
+        try {
+            const folderPath = await window.electronAPI.selectFolder({ title: 'Seleccionar carpeta del proyecto' });
+            const folderName = folderPath ? folderPath.split(/[\\/]/).pop() : ''
+            if (folderPath) {
+                setImportedFolder({
+                    folderPath:folderPath,
+                    folderName:folderName
+                })
+            }
+        } catch (error) {
+            alert(`No se ha podido seleccionar la carpeta del proyecto: ${error}`);
+        }
+    };
+
+    useEffect(() => {
+        console.log("imported folder", importedFolder)
+    }, [importedFolder])
 
     useEffect(() => {
         GetProjects().then((response) => {
@@ -125,11 +148,18 @@ function Projects() {
                             </motion.div>
                         ))}
                     </AnimatePresence>
-                    <div className="bg-secondary p-4 rounded-xl border border-bg-secondary h-60 w-60 overflow-hidden flex">
+                    <MyButton
+                        onClick={handleImportClick}
+                        className="agregar bg-secondary relative p-4 rounded-xl border border-bg-secondary h-60 w-60 overflow-hidden flex flex-col hover:scale-105"
+                    >
                         <span>
                             Agregar un nuevo proyecto
                         </span>
-                    </div>
+                        <div className="flex flex-1 items-center justify-center">
+                            <PlusIcon stroke={"white"} size={5} />
+                        </div>
+                    </MyButton>
+
                 </div>
             </div>
         </article>
